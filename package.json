@@ -1,0 +1,28 @@
+{
+  "name": "@mohio/most",
+  "version": "1.0.0",
+  "description": "Dependency Injection for Javascript",
+  "main": "dist/most.js",
+  "typings": "dist/most.d.ts",
+  "scripts": {
+    "test": "node dist/test",
+	"build": "tsc && npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://gitlab.targaryen.mohio:10080/frontend/most-js.git"
+  },
+  "keywords": [
+    "dependency_injection",
+    "js",
+    "ts"
+  ],
+  "author": "MOHIO GmbH",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^2.9.2"
+  },
+  "publishConfig": {
+	"registry": "http://172.16.5.179:8081/nexus/repository/npm-mohio"
+  }
+}
