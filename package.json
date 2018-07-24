@@ -5,8 +5,9 @@
   "main": "dist/most.js",
   "typings": "dist/most.d.ts",
   "scripts": {
-    "test": "node dist/test",
-	"build": "tsc && npm run test"
+    "test": "mocha dist",
+    "build": "tsc",
+    "build-test": "tsc && npm test"
   },
   "repository": {
     "type": "git",
@@ -20,9 +21,13 @@
   "author": "MOHIO GmbH",
   "license": "ISC",
   "devDependencies": {
+    "@types/chai": "^4.1.4",
+    "@types/mocha": "^5.2.5",
+    "chai": "^4.1.2",
+    "mocha": "^5.2.0",
     "typescript": "^2.9.2"
   },
   "publishConfig": {
-	"registry": "http://172.16.5.179:8081/nexus/repository/npm-mohio"
+    "registry": "http://172.16.5.179:8081/nexus/repository/npm-mohio"
   }
 }

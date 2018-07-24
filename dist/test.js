@@ -11,7 +11,10 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 var most_1 = require("./most");
-var assert_1 = require("./assert");
+require("mocha");
+var chai = require("chai");
+// suppresses error logging during tests.
+most_1.default.setErrorLog(function () { });
 var AbstractFooService = /** @class */ (function () {
     function AbstractFooService() {
     }
@@ -77,49 +80,76 @@ var C = /** @class */ (function () {
     };
     return C;
 }());
-most_1.default.bind(AbstractFooService).toSingleton(ConcreteFooService);
-most_1.default.bind(ConcreteService).asSingleton();
-most_1.default.bind(PrototypeClass).asPrototype();
-most_1.default.bind(ConstructorInjector).asSingleton('injected');
-most_1.default.bind(A).asSingleton();
-most_1.default.bind(B).asSingleton();
-most_1.default.bind(C).asSingleton();
-most_1.default.bind(D).asSingleton();
-var TestCase = /** @class */ (function () {
-    function TestCase() {
-        this.foo = most_1.default.inject(AbstractFooService);
-        this.conc = most_1.default.inject(ConcreteService);
-    }
-    TestCase.prototype.testSingletonBinding = function () {
-        var foo = most_1.default.inject(AbstractFooService);
-        assert_1.default.identical(foo, this.foo, 'Objects are not identical');
-        assert_1.default.equals(foo.greet(), 'Hello', 'Unexpected greeting');
-    };
-    TestCase.prototype.testSingletonRegisty = function () {
-        assert_1.default.equals(this.conc.run(), 'OK', 'Unexpected response from ConcreteService');
-    };
-    TestCase.prototype.testConstructorInjection = function () {
+var should = chai.should();
+describe('Most', function () {
+    var foo;
+    var conc;
+    it('should bind constructors without throwing', function () {
+        should.not.throw(function () {
+            most_1.default.bind(AbstractFooService).toSingleton(ConcreteFooService);
+        }, 'AbstractFooService could not be bound');
+        should.not.throw(function () {
+            most_1.default.bind(ConcreteService).asSingleton();
+        }, 'ConcreteService could not be bound');
+        should.not.throw(function () {
+            most_1.default.bind(PrototypeClass).asPrototype();
+        }, 'PrototypeClass could not be bound');
+        should.not.throw(function () {
+            most_1.default.bind(ConstructorInjector).asSingleton('injected');
+        }, 'Binding with constructor injection failed');
+        should.not.throw(function () {
+            most_1.default.bind(A).asSingleton();
+        }, 'A could not be bound');
+        should.not.throw(function () {
+            most_1.default.bind(B).asSingleton();
+        }, 'B could not be bound');
+        should.not.throw(function () {
+            most_1.default.bind(C).asSingleton();
+        }, 'C could not be bound');
+        should.not.throw(function () {
+            most_1.default.bind(D).asSingleton();
+        }, 'D could not be bound');
+    });
+    it('should inject implementation for AbstractFooService', function () {
+        should.not.throw(function () {
+            foo = most_1.default.inject(AbstractFooService);
+        });
+        foo.should.be.an('object', 'foo is not an object');
+        foo.should.not.equal(null, 'foo is equal to null');
+        foo.should.be.an.instanceof(AbstractFooService, 'foo is not an instance of AbstractFooService');
+        foo.greet().should.equal('Hello');
+    });
+    it('should construct singletons only once', function () {
+        var myFoo = most_1.default.inject(AbstractFooService);
+        myFoo.should.equal(foo, 'myFoo is not strictly equal to foo');
+    });
+    it('should inject implementation for ConcreteService', function () {
+        chai.should().not.throw(function () {
+            conc = most_1.default.inject(ConcreteService);
+            conc.should.instanceof(ConcreteService);
+            conc.run().should.equal('OK');
+        }, 'Could not inject ConcreteService');
+    });
+    it('should inject constructor arguments', function () {
         var inj = most_1.default.inject(ConstructorInjector);
-        assert_1.default.equals(inj.msg, 'injected');
-    };
-    TestCase.prototype.testProtoypeInjection = function () {
+        inj.msg.should.equal('injected', 'Constructor argument was not injected.');
+    });
+    it('should construct new objects for each prototype injection', function () {
         var a = most_1.default.inject(PrototypeClass);
         var b = most_1.default.inject(PrototypeClass);
-        assert_1.default.isTrue(typeof (a.id) === typeof (b.id), 'Types of Prototype instance ids are different');
-        assert_1.default.notIdentical(a, b, 'Prototypes must yield different instances');
-    };
-    TestCase.prototype.testCircularDependencyDetection = function () {
-        assert_1.default.throws(function () { return most_1.default.inject(B); }, 'Circular dependencies are not detected.');
-    };
-    TestCase.prototype.testCircularDependencyBreaking = function () {
+        a.should.instanceof(PrototypeClass);
+        b.should.instanceof(PrototypeClass);
+        a.should.not.equal(b);
+    });
+    it('should throw when detecting a circular dependency', function () {
+        should.throw(function () { return most_1.default.inject(B); }, 'Class injection failed, error printed above');
+    });
+    it('should not throw, when mostInit method is used to break out of circular dependencies', function () {
         var c;
-        assert_1.default.throwsNot(function () {
-            c = most_1.default.inject(C);
-        });
-        assert_1.default.notNull(c, 'Class C has not been injected at all');
-        assert_1.default.notNull(c.d, 'Class D has not been injected into c');
-        assert_1.default.notNull(c.d.c, 'Class C has not been injected into d');
-    };
-    return TestCase;
-}());
-assert_1.default.run(new TestCase());
+        should.not.throw(function () { return c = most_1.default.inject(C); });
+        c.should.be.instanceof(C);
+        c.d.should.be.instanceof(D);
+        c.d.c.should.be.instanceof(C);
+        c.d.c.should.equal(c);
+    });
+});

@@ -1,5 +1,9 @@
 import Most from './most';
-import assert from './assert';
+import 'mocha';
+import * as chai from 'chai';
+
+// suppresses error logging during tests.
+Most.setErrorLog(() => {});
 
 abstract class AbstractFooService {
 	public abstract greet():string;
@@ -49,59 +53,85 @@ class C {
 	}
 }
 
-Most.bind(AbstractFooService).toSingleton(ConcreteFooService);
-Most.bind(ConcreteService).asSingleton();
-Most.bind(PrototypeClass).asPrototype();
-Most.bind(ConstructorInjector).asSingleton('injected');
-Most.bind(A).asSingleton();
-Most.bind(B).asSingleton();
-Most.bind(C).asSingleton();
-Most.bind(D).asSingleton();
+let should = chai.should();
 
-class TestCase {
-	private foo:AbstractFooService;
-	private conc:ConcreteService;
+describe('Most', () => {
+	let foo:AbstractFooService;
+	let conc:ConcreteService;
 	
-	constructor() {
-		this.foo = Most.inject(AbstractFooService);
-		this.conc = Most.inject(ConcreteService);
-	}
+	it('should bind constructors without throwing', () => {
+		should.not.throw(() => {
+			Most.bind(AbstractFooService).toSingleton(ConcreteFooService);
+		}, 'AbstractFooService could not be bound');
+		should.not.throw(() => {
+			Most.bind(ConcreteService).asSingleton();
+		}, 'ConcreteService could not be bound');
+		should.not.throw(() => {
+			Most.bind(PrototypeClass).asPrototype();
+		}, 'PrototypeClass could not be bound');
+		should.not.throw(() => {
+			Most.bind(ConstructorInjector).asSingleton('injected');
+		}, 'Binding with constructor injection failed');
+		should.not.throw(() => {
+			Most.bind(A).asSingleton();
+		}, 'A could not be bound');
+		should.not.throw(() => {
+			Most.bind(B).asSingleton();
+		}, 'B could not be bound');
+		should.not.throw(() => {
+			Most.bind(C).asSingleton();
+		}, 'C could not be bound');
+		should.not.throw(() => {
+			Most.bind(D).asSingleton();
+		}, 'D could not be bound');
+	});
 	
-	public testSingletonBinding() {
-		let foo:AbstractFooService = Most.inject(AbstractFooService);
-		assert.identical(foo, this.foo, 'Objects are not identical');
-		assert.equals(foo.greet(), 'Hello', 'Unexpected greeting');
-	}
+	it('should inject implementation for AbstractFooService', () => {
+		should.not.throw(() => {
+			foo = Most.inject(AbstractFooService);
+		});
+		foo.should.be.an('object', 'foo is not an object');
+		foo.should.not.equal(null, 'foo is equal to null');
+		foo.should.be.an.instanceof(AbstractFooService, 'foo is not an instance of AbstractFooService');
+		foo.greet().should.equal('Hello');
+	});
 	
-	public testSingletonRegisty() {
-		assert.equals(this.conc.run(), 'OK', 'Unexpected response from ConcreteService');
-	}
+	it('should construct singletons only once', () => {
+		let myFoo:AbstractFooService = Most.inject(AbstractFooService);
+		myFoo.should.equal(foo, 'myFoo is not strictly equal to foo');
+	});
 	
-	public testConstructorInjection() {
+	it('should inject implementation for ConcreteService', () => {
+		chai.should().not.throw(() => {
+			conc = Most.inject(ConcreteService);
+			conc.should.instanceof(ConcreteService);
+			conc.run().should.equal('OK');
+		}, 'Could not inject ConcreteService');
+	});
+	
+	it('should inject constructor arguments', () => {
 		let inj:ConstructorInjector = Most.inject(ConstructorInjector);
-		assert.equals(inj.msg, 'injected');
-	}
+		inj.msg.should.equal('injected', 'Constructor argument was not injected.');
+	});
 	
-	public testProtoypeInjection() {
+	it('should construct new objects for each prototype injection', () => {
 		let a:PrototypeClass = Most.inject(PrototypeClass);
 		let b:PrototypeClass = Most.inject(PrototypeClass);
-		assert.isTrue(typeof (a.id) === typeof(b.id), 'Types of Prototype instance ids are different');
-		assert.notIdentical(a, b, 'Prototypes must yield different instances');
-	}
+		a.should.instanceof(PrototypeClass);
+		b.should.instanceof(PrototypeClass);
+		a.should.not.equal(b);
+	});
 	
-	public testCircularDependencyDetection() {
-		assert.throws(() => Most.inject(B), 'Circular dependencies are not detected.');
-	}
+	it('should throw when detecting a circular dependency', () => {
+		should.throw(() => Most.inject(B), 'Class injection failed, error printed above');
+	});
 	
-	public testCircularDependencyBreaking() {
+	it('should not throw, when mostInit method is used to break out of circular dependencies', () => {
 		let c:C;
-		assert.throwsNot(() => {
-			c = Most.inject(C);
-		});
-		assert.notNull(c, 'Class C has not been injected at all');
-		assert.notNull(c.d, 'Class D has not been injected into c');
-		assert.notNull(c.d.c, 'Class C has not been injected into d');
-	}
-}
-
-assert.run(new TestCase());
+		should.not.throw(() => c = Most.inject(C));
+		c.should.be.instanceof(C);
+		c.d.should.be.instanceof(D);
+		c.d.c.should.be.instanceof(C);
+		c.d.c.should.equal(c);
+	});
+});

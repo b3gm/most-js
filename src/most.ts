@@ -1,3 +1,5 @@
+let errorLog:(...args:Array<any>) => void = console.error.bind(console);
+
 abstract class InstanceGetter {
 	protected cnstrct: new () => any;
 	protected constructArgs: Array<any>;
@@ -153,7 +155,7 @@ function logInjectionError(e:any) {
 		errArgs.push('\nInjection stack:', e[injectStackMarker]);
 	}
 
-	console.error.apply(console, errArgs);
+	errorLog.call(null, errArgs);
 }
 
 function inject(clazz: any, ...args: Array<any>) {
@@ -182,7 +184,12 @@ function inject(clazz: any, ...args: Array<any>) {
 	return result;
 }
 
+function setErrorLog(log:(...args:Array<any>) => void) {
+	errorLog = log;
+}
+
 export default {
 	inject,
-	bind
+	bind,
+	setErrorLog
 };

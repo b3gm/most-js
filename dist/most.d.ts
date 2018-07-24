@@ -7,8 +7,10 @@ export interface IMostBinder {
 }
 declare function bind(c: {}): IMostBinder;
 declare function inject(clazz: any, ...args: Array<any>): any;
+declare function setErrorLog(log: (...args: Array<any>) => void): void;
 declare const _default: {
     inject: typeof inject;
     bind: typeof bind;
+    setErrorLog: typeof setErrorLog;
 };
 export default _default;

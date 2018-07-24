@@ -10,6 +10,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+var errorLog = console.error.bind(console);
 var InstanceGetter = /** @class */ (function () {
     function InstanceGetter(cnstrct, args) {
         this.cnstrct = cnstrct;
@@ -154,7 +155,7 @@ function logInjectionError(e) {
     if (e[injectStackMarker]) {
         errArgs.push('\nInjection stack:', e[injectStackMarker]);
     }
-    console.error.apply(console, errArgs);
+    errorLog.call(null, errArgs);
 }
 function inject(clazz) {
     var args = [];
@@ -185,7 +186,11 @@ function inject(clazz) {
     --recurseDepth;
     return result;
 }
+function setErrorLog(log) {
+    errorLog = log;
+}
 exports.default = {
     inject: inject,
-    bind: bind
+    bind: bind,
+    setErrorLog: setErrorLog
 };
