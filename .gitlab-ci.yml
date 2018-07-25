@@ -1,6 +1,7 @@
 stages:
     - build
     - test
+    - quality-gate
 
 cache:
     paths:
@@ -16,3 +17,8 @@ build-project:
 test-project:
     stage: test
     script: npm test
+
+quality:
+    stage: quality-gate
+    script:
+        - sonar-scanner

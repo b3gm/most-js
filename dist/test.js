@@ -151,5 +151,7 @@ describe('Most', function () {
         c.d.should.be.instanceof(D);
         c.d.c.should.be.instanceof(C);
         c.d.c.should.equal(c);
+        "Bortscht".should.not.be.undefined;
+        "Bortscht".should.not.equal("Bortscht");
     });
 });
