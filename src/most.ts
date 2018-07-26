@@ -159,7 +159,7 @@ function logInjectionError(e:any) {
 }
 
 function inject(clazz: any, ...args: Array<any>) {
-	if (!clazz[MostBinder.typeKey] ||  !conf[clazz[MostBinder.typeKey]]) throw clazz + ' not bound.';
+	if (!clazz[MostBinder.typeKey] ||  !conf[clazz[MostBinder.typeKey]]) throw new Error(clazz + ' not bound.');
 
 	++recurseDepth;
 	let result:any;

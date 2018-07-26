@@ -4,21 +4,26 @@ stages:
     - quality-gate
 
 cache:
+    key: "pid_${CI_PROJECT_ID}_cache"
     paths:
-        - node_modules
-        - dist
+        - node_modules/
+        - dist/
+        - coverage/
 
-build-project:
+build-job:
     stage: build
     script:
+        - rm -rf dist/* || true
         - npm install
         - npm run build
 
-test-project:
+test-job:
     stage: test
-    script: npm test
+    script:
+        - rm -rf coverage/* || true
+        - npm test
 
-quality:
+quality-gate-job:
     stage: quality-gate
     script:
         - sonar-scanner

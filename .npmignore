@@ -1,0 +1,10 @@
+/nbproject
+/node_modules
+/coverage
+
+src/
+dist/**/*.test.js
+dist/**/*.test.d.ts
+.gitlab-ci.yml
+sonar-project.properties
+tsconfig.json

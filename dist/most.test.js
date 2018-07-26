@@ -11,8 +11,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 var most_1 = require("./most");
-require("mocha");
-var chai = require("chai");
+require("jest");
 // suppresses error logging during tests.
 most_1.default.setErrorLog(function () { });
 var AbstractFooService = /** @class */ (function () {
@@ -80,78 +79,118 @@ var C = /** @class */ (function () {
     };
     return C;
 }());
-var should = chai.should();
+var Eager = /** @class */ (function () {
+    function Eager() {
+    }
+    return Eager;
+}());
+var AbstractPrototype = /** @class */ (function () {
+    function AbstractPrototype() {
+    }
+    return AbstractPrototype;
+}());
+var ConcretePrototype = /** @class */ (function (_super) {
+    __extends(ConcretePrototype, _super);
+    function ConcretePrototype() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    return ConcretePrototype;
+}(AbstractPrototype));
+var NotBoundClass = /** @class */ (function () {
+    function NotBoundClass() {
+    }
+    return NotBoundClass;
+}());
 describe('Most', function () {
     var foo;
     var conc;
     it('should bind constructors without throwing', function () {
-        should.not.throw(function () {
+        expect(function () {
             most_1.default.bind(AbstractFooService).toSingleton(ConcreteFooService);
-        }, 'AbstractFooService could not be bound');
-        should.not.throw(function () {
+        }).not.toThrow();
+        expect(function () {
             most_1.default.bind(ConcreteService).asSingleton();
-        }, 'ConcreteService could not be bound');
-        should.not.throw(function () {
+        }).not.toThrow();
+        expect(function () {
             most_1.default.bind(PrototypeClass).asPrototype();
-        }, 'PrototypeClass could not be bound');
-        should.not.throw(function () {
+        }).not.toThrow();
+        expect(function () {
             most_1.default.bind(ConstructorInjector).asSingleton('injected');
-        }, 'Binding with constructor injection failed');
-        should.not.throw(function () {
+        }).not.toThrow();
+        expect(function () {
             most_1.default.bind(A).asSingleton();
-        }, 'A could not be bound');
-        should.not.throw(function () {
+        }).not.toThrow();
+        expect(function () {
             most_1.default.bind(B).asSingleton();
-        }, 'B could not be bound');
-        should.not.throw(function () {
+        }).not.toThrow();
+        expect(function () {
             most_1.default.bind(C).asSingleton();
-        }, 'C could not be bound');
-        should.not.throw(function () {
+        }).not.toThrow();
+        expect(function () {
             most_1.default.bind(D).asSingleton();
-        }, 'D could not be bound');
+        }).not.toThrow();
     });
     it('should inject implementation for AbstractFooService', function () {
-        should.not.throw(function () {
+        expect(function () {
             foo = most_1.default.inject(AbstractFooService);
-        });
-        foo.should.be.an('object', 'foo is not an object');
-        foo.should.not.equal(null, 'foo is equal to null');
-        foo.should.be.an.instanceof(AbstractFooService, 'foo is not an instance of AbstractFooService');
-        foo.greet().should.equal('Hello');
+        }).not.toThrow();
+        expect(typeof foo).toEqual('object');
+        expect(foo).not.toEqual(null);
+        expect(foo).toBeInstanceOf(AbstractFooService);
+        expect(foo.greet()).toEqual('Hello');
     });
     it('should construct singletons only once', function () {
         var myFoo = most_1.default.inject(AbstractFooService);
-        myFoo.should.equal(foo, 'myFoo is not strictly equal to foo');
+        expect(myFoo).toEqual(foo);
     });
     it('should inject implementation for ConcreteService', function () {
-        chai.should().not.throw(function () {
+        expect(function () {
             conc = most_1.default.inject(ConcreteService);
-            conc.should.instanceof(ConcreteService);
-            conc.run().should.equal('OK');
-        }, 'Could not inject ConcreteService');
+        }).not.toThrow();
+        expect(conc).toBeInstanceOf(ConcreteService);
+        expect(conc.run()).toEqual('OK');
     });
     it('should inject constructor arguments', function () {
         var inj = most_1.default.inject(ConstructorInjector);
-        inj.msg.should.equal('injected', 'Constructor argument was not injected.');
+        expect(inj.msg).toEqual('injected');
     });
     it('should construct new objects for each prototype injection', function () {
         var a = most_1.default.inject(PrototypeClass);
         var b = most_1.default.inject(PrototypeClass);
-        a.should.instanceof(PrototypeClass);
-        b.should.instanceof(PrototypeClass);
-        a.should.not.equal(b);
+        expect(a).toBeInstanceOf(PrototypeClass);
+        expect(b).toBeInstanceOf(PrototypeClass);
+        expect(a).not.toEqual(b);
     });
     it('should throw when detecting a circular dependency', function () {
-        should.throw(function () { return most_1.default.inject(B); }, 'Class injection failed, error printed above');
+        expect(function () { return most_1.default.inject(B); }).toThrow('Class injection failed, error printed above');
     });
     it('should not throw, when mostInit method is used to break out of circular dependencies', function () {
         var c;
-        should.not.throw(function () { return c = most_1.default.inject(C); });
-        c.should.be.instanceof(C);
-        c.d.should.be.instanceof(D);
-        c.d.c.should.be.instanceof(C);
-        c.d.c.should.equal(c);
-        "Bortscht".should.not.be.undefined;
-        "Bortscht".should.not.equal("Bortscht");
+        expect(function () { return c = most_1.default.inject(C); }).not.toThrow();
+        expect(c).toBeInstanceOf(C);
+        expect(c.d).toBeInstanceOf(D);
+        expect(c.d.c).toBeInstanceOf(C);
+        expect(c.d.c).toEqual(c);
+    });
+    it('should also bind prototype implementations to abstract prototypes', function () {
+        expect(function () { return most_1.default.bind(AbstractPrototype).toPrototype(ConcretePrototype); }).not.toThrow();
+        var a;
+        var b;
+        expect(function () { return a = most_1.default.inject(AbstractPrototype); }).not.toThrow();
+        expect(function () { return b = most_1.default.inject(AbstractPrototype); }).not.toThrow();
+        expect(a).toBeInstanceOf(AbstractPrototype);
+        expect(a).toBeInstanceOf(ConcretePrototype);
+        expect(b).toBeInstanceOf(AbstractPrototype);
+        expect(b).toBeInstanceOf(ConcretePrototype);
+        expect(a).not.toBe(b);
+    });
+    it('should bind and return eager singletons', function () {
+        var eager;
+        expect(function () { return eager = most_1.default.bind(Eager).asEagerSingleton(); }).not.toThrow();
+        expect(eager).toBeInstanceOf(Eager);
+        expect(eager).toEqual(most_1.default.inject(Eager));
+    });
+    it('should throw when, attempting to inject unbound class instances', function () {
+        expect(function () { return most_1.default.inject(NotBoundClass); }).toThrow(new Error(NotBoundClass + ' not bound.'));
     });
 });

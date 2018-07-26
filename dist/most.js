@@ -163,7 +163,7 @@ function inject(clazz) {
         args[_i - 1] = arguments[_i];
     }
     if (!clazz[MostBinder.typeKey] || !conf[clazz[MostBinder.typeKey]])
-        throw clazz + ' not bound.';
+        throw new Error(clazz + ' not bound.');
     ++recurseDepth;
     var result;
     try {
