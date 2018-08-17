@@ -53,7 +53,12 @@ class C {
 }
  
 class Eager {
-	
+}
+
+class EagerB {
+	public autoCompleteTest() {
+		return 'autoCompleteTest';
+	}
 }
 
 abstract class AbstractPrototype {
@@ -182,6 +187,13 @@ describe('Most', () => {
 		expect(() => eager = Most.bind(Eager).asEagerSingleton()).not.toThrow();
 		expect(eager).toBeInstanceOf(Eager);
 		expect(eager).toEqual(Most.inject(Eager));
+	});
+	
+	it('should correctly autocomplete on eager Singletons', () => {
+		expect(() => {
+			const eager = Most.bind(EagerB).asEagerSingleton();
+			eager.autoCompleteTest();
+		}).not.toThrow();
 	});
 	
 	it('should throw when, attempting to inject unbound class instances', () => {

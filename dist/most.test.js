@@ -84,6 +84,14 @@ var Eager = /** @class */ (function () {
     }
     return Eager;
 }());
+var EagerB = /** @class */ (function () {
+    function EagerB() {
+    }
+    EagerB.prototype.autoCompleteTest = function () {
+        return 'autoCompleteTest';
+    };
+    return EagerB;
+}());
 var AbstractPrototype = /** @class */ (function () {
     function AbstractPrototype() {
     }
@@ -210,6 +218,12 @@ describe('Most', function () {
         expect(function () { return eager = most_1.default.bind(Eager).asEagerSingleton(); }).not.toThrow();
         expect(eager).toBeInstanceOf(Eager);
         expect(eager).toEqual(most_1.default.inject(Eager));
+    });
+    it('should correctly autocomplete on eager Singletons', function () {
+        expect(function () {
+            var eager = most_1.default.bind(EagerB).asEagerSingleton();
+            eager.autoCompleteTest();
+        }).not.toThrow();
     });
     it('should throw when, attempting to inject unbound class instances', function () {
         expect(function () { return most_1.default.inject(NotBoundClass); }).toThrow(new Error(NotBoundClass + ' not bound.'));

@@ -13,6 +13,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var errorLog = console.error.bind(console);
 var mostTypeKey = '@MostTypeId';
 var typeAnnotationKey = '@Scope';
+/**
+ * Use as public static property "@Scope" in a class to autobind on
+ * first injection attempt.
+ */
 var Scope;
 (function (Scope) {
     Scope[Scope["SINGLETON"] = 0] = "SINGLETON";
@@ -96,6 +100,7 @@ function fireInitHandler() {
 }
 var MostBinder = /** @class */ (function () {
     function MostBinder(c, id) {
+        this.id = id;
         this.c = c;
         c[mostTypeKey] = id;
     }
@@ -107,13 +112,13 @@ var MostBinder = /** @class */ (function () {
         for (var _i = 1; _i < arguments.length; _i++) {
             args[_i - 1] = arguments[_i];
         }
-        conf[this.c[mostTypeKey]] = new SingletonGetter(cnstrct, args);
+        conf[extractMostId(this.c)] = new SingletonGetter(cnstrct, args);
     };
     /**
      * Also binds a class to an implementation, but creates a new instance on each call.
      */
     MostBinder.prototype.toPrototype = function (cnstrct) {
-        conf[this.c[mostTypeKey]] = new PrototypeGetter(cnstrct);
+        conf[this.id] = new PrototypeGetter(cnstrct);
     };
     /**
      * Just makes the class known to Most.
@@ -123,10 +128,10 @@ var MostBinder = /** @class */ (function () {
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
         }
-        conf[this.c[mostTypeKey]] = new SingletonGetter(this.c, args);
+        conf[this.id] = new SingletonGetter(this.c, args);
     };
     MostBinder.prototype.asPrototype = function () {
-        conf[this.c[mostTypeKey]] = new PrototypeGetter(this.c);
+        conf[this.id] = new PrototypeGetter(this.c);
     };
     /**
      * Like toSingleton, but also instantiates the class immediately.
@@ -136,7 +141,7 @@ var MostBinder = /** @class */ (function () {
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
         }
-        conf[this.c[mostTypeKey]] = new SingletonGetter(this.c, args);
+        conf[this.id] = new SingletonGetter(this.c, args);
         return inject(this.c);
     };
     return MostBinder;

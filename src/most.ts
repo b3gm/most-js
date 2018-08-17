@@ -3,18 +3,22 @@ let errorLog:(...args:Array<any>) => void = console.error.bind(console);
 const mostTypeKey = '@MostTypeId';
 const typeAnnotationKey = '@Scope';
 
+/**
+ * Use as public static property "@Scope" in a class to autobind on
+ * first injection attempt.
+ */
 export enum Scope {
 	SINGLETON, PROTOTYPE
 }
 
-abstract class InstanceGetter {
-	protected cnstrct: new () => any;
+abstract class InstanceGetter<T> {
+	protected cnstrct:{prototype:T};
 	protected constructArgs: Array<any>;
 	private constructing: boolean;
 
 	public abstract getInst(args:Array<any>):any;
 
-	constructor(cnstrct: new () => Object, args?: Array<any>) {
+	constructor(cnstrct:{prototype:T}, args?: Array<any>) {
 		this.cnstrct = cnstrct;
 		this.constructArgs = args || [];
 		this.constructing = false;
@@ -47,10 +51,10 @@ abstract class InstanceGetter {
 	}
 }
 
-class SingletonGetter extends InstanceGetter {
-	private inst:any = null;
+class SingletonGetter<T> extends InstanceGetter<T> {
+	private inst:T = null;
 
-	public getInst(args: Array<any>): any {
+	public getInst(args: Array<any>):T {
 		if (this.inst === null) {
 			if (this.isConstructing()) throw new Error('circular dependency detected');
 			this.setConstructing();
@@ -62,16 +66,16 @@ class SingletonGetter extends InstanceGetter {
 	}
 }
 
-class PrototypeGetter extends InstanceGetter {
-	public getInst(argv: Array<any>): any {
+class PrototypeGetter<T> extends InstanceGetter<T> {
+	public getInst(argv: Array<any>):T {
 		let args = this.prependToArray(this.cnstrct, argv);
-		let instance: any = new (Function.prototype.bind.apply(this.cnstrct, args));
+		let instance:T = new (Function.prototype.bind.apply(this.cnstrct, args));
 		this.postProcess(instance);
 		return instance;
 	}
 }
 
-let conf: { [id: string]: InstanceGetter } = {};
+let conf: { [id: string]: InstanceGetter<any> } = {};
 let mostIdCounter: number = 0;
 let recurseDepth:number = -1;
 let injectStackMarker:string = 'injectStack';
@@ -87,58 +91,57 @@ function fireInitHandler() {
 	}
 }
 
-export interface IMostBinder {
-	toSingleton(cnstrct: new (...args: Array<any>) => Object, ...args: Array<any>):void;
-	toPrototype(cnstrct: new (...args: Array<any>) => Object):void;
+export interface IMostBinder<T> {
+	toSingleton(cnstrct: new (...args: Array<any>) => T, ...args: Array<any>):void;
+	toPrototype(cnstrct: new (...args: Array<any>) => T):void;
 	asSingleton(...args: Array<any>):void;
 	asPrototype():void;
-	asEagerSingleton(...args: Array<any>):Object;
+	asEagerSingleton(...args: Array<any>):T;
 }
 
-class MostBinder implements IMostBinder {
-	private c: any;
+class MostBinder<T> implements IMostBinder<T> {
+	private c:{prototype:T};
 
-	constructor(c: any, id: string) {
+	constructor(c:{prototype:T}, private readonly id: string) {
 		this.c = c;
-
-		c[mostTypeKey]  = id;
+		(<any>c)[mostTypeKey] = id;
 	}
 
 	/**
 	 * Bind a class to an implementation. This cannot be an interface, since typescript drops them on compilation.
 	 */
 	public toSingleton(cnstrct: new (...args: Array<any>) => Object, ...args: Array<any>) {
-		conf[this.c[mostTypeKey]] = new SingletonGetter(cnstrct, args);
+		conf[extractMostId(this.c)] = new SingletonGetter(cnstrct, args);
 	}
 
 	/**
 	 * Also binds a class to an implementation, but creates a new instance on each call.
 	 */
 	public toPrototype(cnstrct: new (...args: Array<any>) => Object) {
-		conf[this.c[mostTypeKey]] = new PrototypeGetter(cnstrct);
+		conf[this.id] = new PrototypeGetter(cnstrct);
 	}
 
 	/**
 	 * Just makes the class known to Most.
 	 */
 	public asSingleton(...args: Array<any>) {
-		conf[this.c[mostTypeKey]] = new SingletonGetter(this.c, args);
+		conf[this.id] = new SingletonGetter(this.c, args);
 	}
 
 	public asPrototype() {
-		conf[this.c[mostTypeKey]] = new PrototypeGetter(this.c);
+		conf[this.id] = new PrototypeGetter(this.c);
 	}
 
 	/**
 	 * Like toSingleton, but also instantiates the class immediately.
 	 */
 	public asEagerSingleton(...args: Array<any>) {
-		conf[this.c[mostTypeKey]] = new SingletonGetter(this.c, args);
+		conf[this.id] = new SingletonGetter(this.c, args);
 		return inject(this.c);
 	}
 }
 
-function bind(c: {}):IMostBinder {
+function bind<T>(c: {prototype:T}):IMostBinder<T> {
 	let id: string = (++mostIdCounter).toFixed();
 	return new MostBinder(c, id);
 }

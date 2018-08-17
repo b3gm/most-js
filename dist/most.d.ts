@@ -1,15 +1,21 @@
+/**
+ * Use as public static property "@Scope" in a class to autobind on
+ * first injection attempt.
+ */
 export declare enum Scope {
     SINGLETON = 0,
     PROTOTYPE = 1
 }
-export interface IMostBinder {
-    toSingleton(cnstrct: new (...args: Array<any>) => Object, ...args: Array<any>): void;
-    toPrototype(cnstrct: new (...args: Array<any>) => Object): void;
+export interface IMostBinder<T> {
+    toSingleton(cnstrct: new (...args: Array<any>) => T, ...args: Array<any>): void;
+    toPrototype(cnstrct: new (...args: Array<any>) => T): void;
     asSingleton(...args: Array<any>): void;
     asPrototype(): void;
-    asEagerSingleton(...args: Array<any>): Object;
+    asEagerSingleton(...args: Array<any>): T;
 }
-declare function bind(c: {}): IMostBinder;
+declare function bind<T>(c: {
+    prototype: T;
+}): IMostBinder<T>;
 declare function inject<T>(clazz: {
     prototype: T;
 }, ...args: Array<any>): T;
