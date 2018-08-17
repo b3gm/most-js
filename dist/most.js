@@ -11,6 +11,13 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 var errorLog = console.error.bind(console);
+var mostTypeKey = '@MostTypeId';
+var typeAnnotationKey = '@Scope';
+var Scope;
+(function (Scope) {
+    Scope[Scope["SINGLETON"] = 0] = "SINGLETON";
+    Scope[Scope["PROTOTYPE"] = 1] = "PROTOTYPE";
+})(Scope = exports.Scope || (exports.Scope = {}));
 var InstanceGetter = /** @class */ (function () {
     function InstanceGetter(cnstrct, args) {
         this.cnstrct = cnstrct;
@@ -90,7 +97,7 @@ function fireInitHandler() {
 var MostBinder = /** @class */ (function () {
     function MostBinder(c, id) {
         this.c = c;
-        c[MostBinder.typeKey] = id;
+        c[mostTypeKey] = id;
     }
     /**
      * Bind a class to an implementation. This cannot be an interface, since typescript drops them on compilation.
@@ -100,13 +107,13 @@ var MostBinder = /** @class */ (function () {
         for (var _i = 1; _i < arguments.length; _i++) {
             args[_i - 1] = arguments[_i];
         }
-        conf[this.c[MostBinder.typeKey]] = new SingletonGetter(cnstrct, args);
+        conf[this.c[mostTypeKey]] = new SingletonGetter(cnstrct, args);
     };
     /**
      * Also binds a class to an implementation, but creates a new instance on each call.
      */
     MostBinder.prototype.toPrototype = function (cnstrct) {
-        conf[this.c[MostBinder.typeKey]] = new PrototypeGetter(cnstrct);
+        conf[this.c[mostTypeKey]] = new PrototypeGetter(cnstrct);
     };
     /**
      * Just makes the class known to Most.
@@ -116,10 +123,10 @@ var MostBinder = /** @class */ (function () {
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
         }
-        conf[this.c[MostBinder.typeKey]] = new SingletonGetter(this.c, args);
+        conf[this.c[mostTypeKey]] = new SingletonGetter(this.c, args);
     };
     MostBinder.prototype.asPrototype = function () {
-        conf[this.c[MostBinder.typeKey]] = new PrototypeGetter(this.c);
+        conf[this.c[mostTypeKey]] = new PrototypeGetter(this.c);
     };
     /**
      * Like toSingleton, but also instantiates the class immediately.
@@ -129,10 +136,9 @@ var MostBinder = /** @class */ (function () {
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
         }
-        conf[this.c[MostBinder.typeKey]] = new SingletonGetter(this.c, args);
+        conf[this.c[mostTypeKey]] = new SingletonGetter(this.c, args);
         return inject(this.c);
     };
-    MostBinder.typeKey = '__Most_type_id';
     return MostBinder;
 }());
 function bind(c) {
@@ -157,17 +163,42 @@ function logInjectionError(e) {
     }
     errorLog.call(null, errArgs);
 }
+function extractMostId(clazz) {
+    return clazz[mostTypeKey];
+}
+function extractMostScope(clazz) {
+    return clazz[typeAnnotationKey];
+}
+function autoBind(clazz) {
+    var scope = extractMostScope(clazz);
+    switch (scope) {
+        case Scope.PROTOTYPE:
+            bind(clazz).asPrototype();
+            break;
+        case Scope.SINGLETON:
+            bind(clazz).asSingleton();
+            break;
+        default:
+            throw new Error(clazz + ' not bound.');
+    }
+    return extractMostId(clazz);
+}
 function inject(clazz) {
     var args = [];
     for (var _i = 1; _i < arguments.length; _i++) {
         args[_i - 1] = arguments[_i];
     }
-    if (!clazz[MostBinder.typeKey] || !conf[clazz[MostBinder.typeKey]])
-        throw new Error(clazz + ' not bound.');
+    var id = extractMostId(clazz);
+    if (!id) {
+        id = autoBind(clazz);
+    }
+    if (!conf[id]) {
+        throw new Error(clazz + ' contains unknown type id.');
+    }
     ++recurseDepth;
     var result;
     try {
-        result = conf[clazz[MostBinder.typeKey]].getInst(args);
+        result = conf[id].getInst(args);
     }
     catch (e) {
         var nerr = new Error('Unable to get Instance of class');
@@ -192,5 +223,6 @@ function setErrorLog(log) {
 exports.default = {
     inject: inject,
     bind: bind,
-    setErrorLog: setErrorLog
+    setErrorLog: setErrorLog,
+    Scope: Scope
 };

@@ -101,6 +101,27 @@ var NotBoundClass = /** @class */ (function () {
     }
     return NotBoundClass;
 }());
+var AutoBindSingleton = /** @class */ (function () {
+    function AutoBindSingleton() {
+    }
+    AutoBindSingleton.prototype.autocompleteTest = function () {
+        return 'Most';
+    };
+    AutoBindSingleton['@Scope'] = most_1.default.Scope.SINGLETON;
+    return AutoBindSingleton;
+}());
+var AutoBindPrototype = /** @class */ (function () {
+    function AutoBindPrototype() {
+    }
+    AutoBindPrototype['@Scope'] = most_1.default.Scope.PROTOTYPE;
+    return AutoBindPrototype;
+}());
+var UnknownTypeId = /** @class */ (function () {
+    function UnknownTypeId() {
+    }
+    UnknownTypeId['@MostTypeId'] = '-1';
+    return UnknownTypeId;
+}());
 describe('Most', function () {
     var foo;
     var conc;
@@ -192,5 +213,22 @@ describe('Most', function () {
     });
     it('should throw when, attempting to inject unbound class instances', function () {
         expect(function () { return most_1.default.inject(NotBoundClass); }).toThrow(new Error(NotBoundClass + ' not bound.'));
+    });
+    it('should autobind annotated singletons', function () {
+        var abInst;
+        expect(function () { return abInst = most_1.default.inject(AutoBindSingleton); }).not.toThrow();
+        expect(abInst).toBeInstanceOf(AutoBindSingleton);
+    });
+    it('should autobind annotated prototypes', function () {
+        var abInst;
+        expect(function () { return abInst = most_1.default.inject(AutoBindPrototype); }).not.toThrow();
+        expect(abInst).toBeInstanceOf(AutoBindPrototype);
+    });
+    it('should throw on unknown type ids', function () {
+        expect(function () { return most_1.default.inject(UnknownTypeId); }).toThrow(new Error(UnknownTypeId + ' contains unknown type id.'));
+    });
+    it('should correctly autocomplete returned instance members.', function () {
+        var abInst = most_1.default.inject(AutoBindSingleton);
+        expect(function () { return abInst.autocompleteTest(); }).not.toThrow();
     });
 });
