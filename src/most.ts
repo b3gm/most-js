@@ -164,7 +164,7 @@ function logInjectionError(e:any) {
 		errArgs.push('\nInjection stack:', e[injectStackMarker]);
 	}
 
-	errorLog.call(null, errArgs);
+	errorLog.apply(null, errArgs);
 }
 
 function extractMostId(clazz:any):string {
