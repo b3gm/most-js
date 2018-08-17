@@ -1,6 +1,6 @@
 {
   "name": "@mohio/most",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Dependency Injection for Javascript",
   "main": "dist/most.js",
   "typings": "dist/most.d.ts",
