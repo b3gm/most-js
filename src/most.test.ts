@@ -68,6 +68,22 @@ class NotBoundClass {
 	
 }
 
+class AutoBindSingleton {
+	static readonly '@Scope' = Most.Scope.SINGLETON;
+	
+	public autocompleteTest() {
+		return 'Most';
+	}
+}
+
+class AutoBindPrototype {
+	static readonly '@Scope' = Most.Scope.PROTOTYPE;
+}
+
+class UnknownTypeId {
+	static readonly '@MostTypeId' = '-1';
+}
+
 describe('Most', () => {
 	let foo:AbstractFooService;
 	let conc:ConcreteService;
@@ -173,4 +189,25 @@ describe('Most', () => {
 			new Error(NotBoundClass + ' not bound.')
 		);
 	});
+	
+	it('should autobind annotated singletons', () => {
+		let abInst:AutoBindSingleton;
+		expect(() => abInst = Most.inject(AutoBindSingleton)).not.toThrow();
+		expect(abInst).toBeInstanceOf(AutoBindSingleton);
+	});
+	
+	it('should autobind annotated prototypes', () => {
+		let abInst:AutoBindPrototype;
+		expect(() => abInst = Most.inject(AutoBindPrototype)).not.toThrow();
+		expect(abInst).toBeInstanceOf(AutoBindPrototype);
+	});
+	
+	it('should throw on unknown type ids', () => {
+		expect(() => Most.inject(UnknownTypeId)).toThrow(new Error(UnknownTypeId + ' contains unknown type id.'));
+	});
+	
+	it('should correctly autocomplete returned instance members.', () => {
+		const abInst = Most.inject(AutoBindSingleton);
+		expect(() => abInst.autocompleteTest()).not.toThrow();
+	})
 });

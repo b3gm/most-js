@@ -1,5 +1,12 @@
 let errorLog:(...args:Array<any>) => void = console.error.bind(console);
 
+const mostTypeKey = '@MostTypeId';
+const typeAnnotationKey = '@Scope';
+
+export enum Scope {
+	SINGLETON, PROTOTYPE
+}
+
 abstract class InstanceGetter {
 	protected cnstrct: new () => any;
 	protected constructArgs: Array<any>;
@@ -90,44 +97,43 @@ export interface IMostBinder {
 
 class MostBinder implements IMostBinder {
 	private c: any;
-	public static typeKey: string = '__Most_type_id';
 
 	constructor(c: any, id: string) {
 		this.c = c;
 
-		c[MostBinder.typeKey]  = id;
+		c[mostTypeKey]  = id;
 	}
 
 	/**
 	 * Bind a class to an implementation. This cannot be an interface, since typescript drops them on compilation.
 	 */
 	public toSingleton(cnstrct: new (...args: Array<any>) => Object, ...args: Array<any>) {
-		conf[this.c[MostBinder.typeKey]] = new SingletonGetter(cnstrct, args);
+		conf[this.c[mostTypeKey]] = new SingletonGetter(cnstrct, args);
 	}
 
 	/**
 	 * Also binds a class to an implementation, but creates a new instance on each call.
 	 */
 	public toPrototype(cnstrct: new (...args: Array<any>) => Object) {
-		conf[this.c[MostBinder.typeKey]] = new PrototypeGetter(cnstrct);
+		conf[this.c[mostTypeKey]] = new PrototypeGetter(cnstrct);
 	}
 
 	/**
 	 * Just makes the class known to Most.
 	 */
 	public asSingleton(...args: Array<any>) {
-		conf[this.c[MostBinder.typeKey]] = new SingletonGetter(this.c, args);
+		conf[this.c[mostTypeKey]] = new SingletonGetter(this.c, args);
 	}
 
 	public asPrototype() {
-		conf[this.c[MostBinder.typeKey]] = new PrototypeGetter(this.c);
+		conf[this.c[mostTypeKey]] = new PrototypeGetter(this.c);
 	}
 
 	/**
 	 * Like toSingleton, but also instantiates the class immediately.
 	 */
 	public asEagerSingleton(...args: Array<any>) {
-		conf[this.c[MostBinder.typeKey]] = new SingletonGetter(this.c, args);
+		conf[this.c[mostTypeKey]] = new SingletonGetter(this.c, args);
 		return inject(this.c);
 	}
 }
@@ -158,13 +164,42 @@ function logInjectionError(e:any) {
 	errorLog.call(null, errArgs);
 }
 
-function inject(clazz: any, ...args: Array<any>) {
-	if (!clazz[MostBinder.typeKey] ||  !conf[clazz[MostBinder.typeKey]]) throw new Error(clazz + ' not bound.');
+function extractMostId(clazz:any):string {
+	return clazz[mostTypeKey];
+}
+
+function extractMostScope(clazz:any):Scope {
+	return clazz[typeAnnotationKey];
+}
+
+function autoBind<T>(clazz: {prototype:T}) {
+	const scope = extractMostScope(clazz);
+	switch(scope) {
+	case Scope.PROTOTYPE:
+		bind(clazz).asPrototype();
+		break;
+	case Scope.SINGLETON:
+		bind(clazz).asSingleton();
+		break;
+	default:
+		throw new Error(clazz + ' not bound.');
+	}
+	return extractMostId(clazz);
+}
+
+function inject<T>(clazz: {prototype:T}, ...args: Array<any>):T {
+	let id = extractMostId(clazz);
+	if (!id) {
+		id = autoBind(clazz);
+	}
+	if(!conf[id]) {
+		throw new Error(clazz + ' contains unknown type id.');
+	}
 
 	++recurseDepth;
-	let result:any;
+	let result:T;
 	try {
-		result = conf[clazz[MostBinder.typeKey]].getInst(args);
+		result = conf[id].getInst(args);
 	} catch (e) {
 		let nerr:Error = new Error('Unable to get Instance of class');
 		let injectStack:Array<any> = e[injectStackMarker] || [];
@@ -191,5 +226,6 @@ function setErrorLog(log:(...args:Array<any>) => void) {
 export default {
 	inject,
 	bind,
-	setErrorLog
+	setErrorLog,
+	Scope
 };
