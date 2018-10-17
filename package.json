@@ -1,5 +1,5 @@
 {
-  "name": "@mohio/most",
+  "name": "@b3gm/most",
   "version": "1.2.3",
   "description": "Dependency Injection for Javascript",
   "main": "dist/most.js",
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "http://gitlab.targaryen.mohio:10080/frontend/most-js.git"
+    "url": "https://gitlab.lucky-trade.de/frontend/most-js.git"
   },
   "keywords": [
     "dependency_injection",
@@ -28,7 +28,7 @@
     "typescript": "^2.9.2"
   },
   "publishConfig": {
-    "registry": "http://172.16.5.179:8081/nexus/repository/npm-mohio"
+    "registry": "https://nexus.lucky-trade.de/repository/npm-private/"
   },
   "jest": {
     "transform": {
