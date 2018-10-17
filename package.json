@@ -18,7 +18,7 @@
     "js",
     "ts"
   ],
-  "author": "MOHIO GmbH",
+  "author": "b3gm",
   "license": "ISC",
   "devDependencies": {
     "@types/jest": "^23.3.0",
