@@ -16,7 +16,7 @@ Most relases are available on our internal npm repository and can simply be
 installed by running:
 
 ```bash
-npm install --save @mohio/most
+npm install --save @b3gm/most
 ```
 
 TypeScript bindings are provided.
@@ -52,7 +52,7 @@ in a DOMContentLoaded event handler:
 
 ```typescript
 // index.ts
-import Most from '@mohio/most';
+import Most from '@b3gm/most';
 import AbstractFoo from './AbstractFoo';
 import ConcreteFoo from './ConcreteFoo';
 
